@@ -17,7 +17,7 @@ pnpm build
 
 ## Publicare pe Vercel
 
-Proiectul folosește `pnpm-lock.yaml` și produce site-ul static în `dist/client`. Fișierul `vercel.json` indică directorul pe care Vercel trebuie să îl publice. Conectează repository-ul GitHub la Vercel pentru publicare automată la fiecare actualizare.
+Proiectul folosește `pnpm-lock.yaml` și produce site-ul static în `dist/client`. Fișierul `vercel.json` indică directorul pe care Vercel trebuie să îl publice. Conectează repository-ul GitHub la Vercel pentru publicare automată la fiecare actualizare. Imaginile din repository sunt reconstruite automat înaintea build-ului.
 
 ## Funcționalități demonstrative
 

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.vercel/
+.openai/
+.pnpm-store/
+.env
+.env.*
+!.env.example
+
+# Keep the source project focused; these are local reference/review assets.
+design-reference.png
+design-review/
+design-qa.md
+AGENTS.md
+package-lock.json
