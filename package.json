@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/restore-assets.mjs && vite build",
+    "build": "node scripts/restore-assets.mjs && vite build && node scripts/prepare-product-pages.mjs",
     "preview": "vite preview",
     "test:sites": "node --test tests/sites-worker.test.mjs"
   },
