@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "@phosphor-icons/react/dist/csr/ArrowRight";
 import { CheckCircle } from "@phosphor-icons/react/dist/csr/CheckCircle";
 import { CreditCard } from "@phosphor-icons/react/dist/csr/CreditCard";
@@ -16,6 +16,7 @@ import { Star } from "@phosphor-icons/react/dist/csr/Star";
 import { Truck } from "@phosphor-icons/react/dist/csr/Truck";
 import { UserCircle } from "@phosphor-icons/react/dist/csr/UserCircle";
 import { X } from "@phosphor-icons/react/dist/csr/X";
+import { products } from "./products.js";
 
 const categories = [
   { name: "Câini", note: "Tot ce-i trebuie", image: "/assets/boxer-hero.webp", imageClass: "dog-tile" },
@@ -25,69 +26,135 @@ const categories = [
   { name: "Jucării", note: "Distracție fără oprire", image: "/assets/category-toys.webp" },
 ];
 
-const products = [
-  {
-    id: "dog-food",
-    name: "Hrană completă pentru câini adulți",
-    details: "Rețetă echilibrată · 12 kg",
-    price: 299.9,
-    categories: ["Hrană", "Câini"],
-    image: "/assets/product-dog-food.webp",
-    rating: "4,9",
-    reviews: 120,
-    badge: "Preferatul blănoșilor",
-  },
-  {
-    id: "cat-food",
-    name: "Hrană cu somon pentru pisici adulte",
-    details: "Bobițe crocante · 1,5 kg",
-    price: 64.9,
-    categories: ["Hrană", "Pisici"],
-    image: "/assets/product-cat-food.webp",
-    rating: "4,8",
-    reviews: 98,
-  },
-  {
-    id: "chicken-treats",
-    name: "Bucățele fragede cu pui",
-    details: "Recompense naturale · 80 g",
-    price: 18.9,
-    categories: ["Recompense", "Câini"],
-    image: "/assets/product-treats.webp",
-    rating: "4,9",
-    reviews: 73,
-    badge: "Ingredient simplu",
-  },
-  {
-    id: "chew-toy",
-    name: "Minge rezistentă pentru joacă",
-    details: "Jucărie de cauciuc · mărimea M",
-    price: 69.9,
-    categories: ["Jucării", "Câini"],
-    image: "/assets/product-toy.webp",
-    rating: "4,8",
-    reviews: 65,
-  },
-  {
-    id: "knit-sweater",
-    name: "Pulover moale pentru plimbări",
-    details: "Tricot confortabil · mărimea S",
-    price: 89.9,
-    categories: ["Hăinuțe", "Câini"],
-    image: "/assets/category-clothes.webp",
-    rating: "4,7",
-    reviews: 42,
-  },
-];
 
 const money = (value) =>
   `${value.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} lei`;
+
+
+function productPath(product) {
+  return "/produse/" + product.id + "/";
+}
+
+function handleProductLinkClick(event, product, onOpenProduct) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  onOpenProduct(product);
+}
+
+function ProductDetailPage({ product, relatedProducts, quantity, isFavorite, onQuantityChange, onAddToCart, onToggleFavorite, onHome, onCategory, onOpenProduct }) {
+  return (
+    <main className="product-detail-page">
+      <div className="page-wrap">
+        <nav className="product-breadcrumbs" aria-label="Fir de navigare">
+          <button type="button" onClick={onHome}>Acasă</button>
+          <ArrowRight size={14} aria-hidden="true" />
+          <button type="button" onClick={() => onCategory(product.categories[0])}>{product.categories[0]}</button>
+          <ArrowRight size={14} aria-hidden="true" />
+          <span aria-current="page">{product.name}</span>
+        </nav>
+
+        <section className="product-detail-layout" aria-labelledby="product-detail-title">
+          <div className="product-detail-media">
+            {product.badge && <span className="product-badge">{product.badge}</span>}
+            <img className={product.id === "knit-sweater" ? "photo-cover" : ""} src={product.image} alt={product.name} />
+          </div>
+
+          <div className="product-detail-copy">
+            <p className="eyebrow"><span className="eyebrow-dot" />{product.categories.join(" · ")}</p>
+            <h1 id="product-detail-title">{product.name}</h1>
+            <div className="detail-rating" aria-label={"Evaluare " + product.rating + " din 5, " + product.reviews + " recenzii"}>
+              <span className="rating-stars" aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <Star key={index} size={17} weight="fill" />)}</span>
+              <strong>{product.rating}</strong>
+              <span>({product.reviews} recenzii)</span>
+            </div>
+            <p className="detail-description">{product.description}</p>
+            <p className="detail-variant">{product.details}</p>
+            <div className="detail-price-row">
+              <strong className="detail-price">{money(product.price)}</strong>
+              <span>Preț cu TVA inclus</span>
+            </div>
+            <p className="detail-availability"><CheckCircle size={19} weight="fill" aria-hidden="true" /> Disponibil pentru comandă</p>
+
+            <div className="detail-purchase-row">
+              <div className="quantity-control" aria-label={"Cantitate pentru " + product.name}>
+                <button type="button" onClick={() => onQuantityChange(product.id, -1)} aria-label="Scade cantitatea"><Minus size={17} weight="bold" /></button>
+                <span aria-live="polite">{quantity}</span>
+                <button type="button" onClick={() => onQuantityChange(product.id, 1)} aria-label="Mărește cantitatea"><Plus size={17} weight="bold" /></button>
+              </div>
+              <button className="primary-button detail-add-button" type="button" onClick={() => onAddToCart(product)}>
+                <ShoppingCart size={21} aria-hidden="true" /> Adaugă în coș
+              </button>
+              <button className={isFavorite ? "detail-favorite is-saved" : "detail-favorite"} type="button" onClick={() => onToggleFavorite(product.id)} aria-pressed={isFavorite} aria-label={isFavorite ? "Șterge produsul din favorite" : "Adaugă produsul la favorite"}>
+                <Heart size={21} weight={isFavorite ? "fill" : "regular"} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="detail-delivery-card">
+              <Truck size={25} aria-hidden="true" />
+              <span><strong>Livrare rapidă</strong><small>În 1–3 zile lucrătoare · transport gratuit de la 199 lei</small></span>
+            </div>
+          </div>
+        </section>
+
+        <section className="product-information" aria-label="Informații despre produs">
+          <article className="product-info-card product-info-description">
+            <p className="eyebrow">Pe scurt</p>
+            <h2>Despre produs</h2>
+            <p>{product.description}</p>
+          </article>
+          <article className="product-info-card">
+            <p className="eyebrow">Lucruri bune</p>
+            <h2>De ce îl vei îndrăgi</h2>
+            <ul className="product-highlights">
+              {product.highlights.map((highlight) => <li key={highlight}><CheckCircle size={18} weight="fill" aria-hidden="true" />{highlight}</li>)}
+            </ul>
+          </article>
+          <article className="product-info-card">
+            <p className="eyebrow">Detalii utile</p>
+            <h2>Informații produs</h2>
+            <dl className="product-specifications">
+              {product.specifications.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+            </dl>
+          </article>
+        </section>
+
+        {relatedProducts.length > 0 && <section className="related-products" aria-labelledby="related-products-title">
+          <div className="section-heading">
+            <div><p className="eyebrow">Poate îți mai place</p><h2 id="related-products-title">Produse asemănătoare</h2></div>
+            <button className="text-link" type="button" onClick={onHome}>Vezi toate produsele <ArrowRight size={18} aria-hidden="true" /></button>
+          </div>
+          <div className="related-product-grid">
+            {relatedProducts.map((related) => <article className="related-product-card" key={related.id}>
+              <a href={productPath(related)} onClick={(event) => handleProductLinkClick(event, related, onOpenProduct)} aria-label={"Vezi " + related.name}>
+                <img src={related.image} alt="" />
+                <strong>{related.name}</strong>
+              </a>
+              <p>{money(related.price)}</p>
+            </article>)}
+          </div>
+        </section>}
+      </div>
+    </main>
+  );
+}
+
+function ProductNotFound({ onHome }) {
+  return (
+    <main className="product-not-found page-wrap">
+      <PawPrint size={42} aria-hidden="true" />
+      <h1>Nu am găsit acest produs</h1>
+      <p>Înapoi la magazin și te ajutăm să găsești ce cauți.</p>
+      <button className="primary-button" type="button" onClick={onHome}>Înapoi la magazin</button>
+    </main>
+  );
+}
 
 function scrollToProducts() {
   document.getElementById("produse")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function App() {
+  const [pathname, setPathname] = useState(() => window.location.pathname);
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -124,12 +191,60 @@ function App() {
     return list;
   }, [activeCategory, favorites, query, showAllProducts, showFavorites, sortOrder]);
 
+  const routeSegments = pathname.split("/").filter(Boolean);
+  const productIdFromPath = routeSegments[0] === "produse" ? routeSegments[1] : undefined;
+  const currentProduct = products.find((product) => product.id === productIdFromPath);
+  const isProductRoute = pathname.startsWith("/produse/");
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setPathname(window.location.pathname);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    document.title = currentProduct ? currentProduct.name + " | PetPrieteni" : "PetPrieteni — pentru prieteni pe viață";
+  }, [currentProduct]);
+
+  function navigateHome() {
+    if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
+    else window.history.replaceState({}, "", "/");
+    setPathname("/");
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goToCatalog() {
+    if (window.location.pathname !== "/") {
+      window.history.pushState({}, "", "/");
+      setPathname("/");
+      window.setTimeout(scrollToProducts, 0);
+    } else {
+      scrollToProducts();
+    }
+  }
+
+  function openProduct(product) {
+    const nextPath = productPath(product);
+    window.history.pushState({}, "", nextPath);
+    setPathname(nextPath);
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function selectCategory(category) {
+    if (window.location.pathname !== "/") {
+      window.history.pushState({}, "", "/");
+      setPathname("/");
+    }
     setActiveCategory(category);
     setShowAllProducts(true);
     setShowFavorites(false);
     setMobileMenuOpen(false);
-    scrollToProducts();
+    window.setTimeout(scrollToProducts, 0);
   }
 
   function clearFilters() {
@@ -193,12 +308,12 @@ function App() {
 
       <header className="site-header">
         <div className="header-main page-wrap">
-          <a className="brand" href="#acasa" aria-label="PetPrieteni, pagina principală" onClick={clearFilters}>
+          <a className="brand" href="/" aria-label="PetPrieteni, pagina principală" onClick={(event) => { event.preventDefault(); clearFilters(); navigateHome(); }}>
             <PawPrint className="brand-paw" weight="fill" aria-hidden="true" />
             <span className="brand-copy"><strong>PetPrieteni</strong><small>Tot ce-i mai bun pentru prietenii tăi</small></span>
           </a>
 
-          <form className="search-form" role="search" onSubmit={(event) => { event.preventDefault(); scrollToProducts(); }}>
+          <form className="search-form" role="search" onSubmit={(event) => { event.preventDefault(); goToCatalog(); }}>
             <MagnifyingGlass size={21} weight="regular" aria-hidden="true" />
             <label className="sr-only" htmlFor="site-search">Caută produse</label>
             <input id="site-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ce cauți pentru prietenul tău?" />
@@ -235,7 +350,7 @@ function App() {
         </nav>
       </header>
 
-      <main id="acasa">
+      {currentProduct ? <ProductDetailPage product={currentProduct} relatedProducts={products.filter((product) => product.id !== currentProduct.id && product.categories.some((category) => currentProduct.categories.includes(category))).slice(0, 3)} quantity={quantities[currentProduct.id] || 1} isFavorite={favorites.includes(currentProduct.id)} onQuantityChange={changeSelectedQuantity} onAddToCart={addToCart} onToggleFavorite={toggleFavorite} onHome={() => { clearFilters(); navigateHome(); }} onCategory={selectCategory} onOpenProduct={openProduct} /> : isProductRoute ? <ProductNotFound onHome={() => { clearFilters(); navigateHome(); }} /> : <main id="acasa">
         <section className="hero page-wrap" aria-labelledby="hero-title">
           <img className="hero-photo" src="/assets/boxer-hero.webp" alt="Boxer fericit, așezat într-o cameră luminoasă" />
           <div className="hero-copy">
@@ -307,11 +422,14 @@ function App() {
                     <button className={`save-product ${favorites.includes(product.id) ? "is-saved" : ""}`} type="button" onClick={() => toggleFavorite(product.id)} aria-label={favorites.includes(product.id) ? `Șterge ${product.name} din favorite` : `Adaugă ${product.name} la favorite`}>
                       <Heart size={21} weight={favorites.includes(product.id) ? "fill" : "regular"} aria-hidden="true" />
                     </button>
-                    <img className={product.id === "knit-sweater" ? "photo-cover" : ""} src={product.image} alt={product.name} />
+                    <a className="product-image-link" href={productPath(product)} onClick={(event) => handleProductLinkClick(event, product, openProduct)} aria-label={"Vezi " + product.name}>
+                      <img className={product.id === "knit-sweater" ? "photo-cover" : ""} src={product.image} alt="" />
+                    </a>
                   </div>
                   <div className="product-content">
                     <p className="product-category">{product.categories[0]}</p>
-                    <h3>{product.name}</h3>
+                    <h3><a className="product-name-link" href={productPath(product)} onClick={(event) => handleProductLinkClick(event, product, openProduct)}>{product.name}</a></h3>
+                    <button className="product-detail-link" type="button" onClick={() => openProduct(product)}>Vezi detalii <ArrowRight size={15} aria-hidden="true" /></button>
                     <p className="product-details">{product.details}</p>
                     <div className="rating-row" aria-label={`Evaluare ${product.rating} din 5, ${product.reviews} recenzii`}><span className="rating-stars" aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <Star key={index} size={15} weight="fill" />)}</span><small>{product.rating} · {product.reviews} recenzii</small></div>
                     <strong className="product-price">{money(product.price)}</strong>
@@ -338,10 +456,10 @@ function App() {
           <div className="comfort-copy"><p className="eyebrow">Grijă în fiecare zi</p><h2>Tot pentru confortul și fericirea lor</h2><p>De la hrana potrivită la jucăriile preferate, găsești aici lucruri bune pentru companionul tău.</p><button className="primary-button" type="button" onClick={scrollToProducts}>Descoperă produsele <ArrowRight size={18} aria-hidden="true" /></button></div>
           <div className="comfort-note"><Heart size={30} weight="regular" aria-hidden="true" /><span>Prietenie<br />în fiecare zi</span></div>
         </section>
-      </main>
+      </main>}
 
       <footer className="site-footer page-wrap" id="contact">
-        <a className="brand footer-brand" href="#acasa" onClick={clearFilters}><PawPrint className="brand-paw" weight="fill" aria-hidden="true" /><span className="brand-copy"><strong>PetPrieteni</strong><small>Tot ce-i mai bun pentru prietenii tăi</small></span></a>
+        <a className="brand footer-brand" href="/" onClick={(event) => { event.preventDefault(); clearFilters(); navigateHome(); }}><PawPrint className="brand-paw" weight="fill" aria-hidden="true" /><span className="brand-copy"><strong>PetPrieteni</strong><small>Tot ce-i mai bun pentru prietenii tăi</small></span></a>
         <p>Lucruri alese cu grijă pentru o viață mai fericită împreună.</p>
         <span>© 2026 PetPrieteni · Magazin demonstrativ</span>
       </footer>
