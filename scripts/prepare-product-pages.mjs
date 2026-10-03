@@ -16,9 +16,18 @@ const escapeHtml = (value) => value.replace(/[&<>"]/g, (character) => ({
 for (const product of products) {
   const title = `${product.name} | PetPrieteni`;
   const description = `${product.name} — ${product.details}. Descoperă produsul și comandă simplu de la PetPrieteni.`;
-  const page = template
-    .replace(/<title>[^<]*<\\/title>/, `<title>${escapeHtml(title)}</title>`)
-    .replace(/<meta name="description" content="[^"]*" \\/>/, `<meta name="description" content="${escapeHtml(description)}" />`);
+  let page = template;
+  const titleStart = page.indexOf("<title>");
+  const titleEnd = page.indexOf("</title>", titleStart) + "</title>".length;
+  const descriptionStart = page.indexOf('<meta name="description"');
+  const descriptionEnd = page.indexOf("/>", descriptionStart) + 2;
+  if (titleStart < 0 || titleEnd < "</title>".length || descriptionStart < 0 || descriptionEnd < 2) {
+    throw new Error("Could not find page metadata in the Vite HTML template.");
+  }
+  page = page.slice(0, titleStart) + `<title>${escapeHtml(title)}</title>` + page.slice(titleEnd);
+  const nextDescriptionStart = page.indexOf('<meta name="description"');
+  const nextDescriptionEnd = page.indexOf("/>", nextDescriptionStart) + 2;
+  page = page.slice(0, nextDescriptionStart) + `<meta name="description" content="${escapeHtml(description)}" />` + page.slice(nextDescriptionEnd);
   const directory = path.join(output, "produse", product.id);
   await mkdir(directory, { recursive: true });
   await writeFile(path.join(directory, "index.html"), page);
